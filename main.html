@@ -85,22 +85,28 @@ div.tooltip {
 
 	  var path = d3.geo.path()
 
-	  //Reading map file and data
+	//Reading map file and data
+	var data_selection;
 
-	  queue()
-	  .defer(d3.json, "us.json")
-	  .defer(d3.csv, "data.csv")
-	  .await(ready);
-
+	function load_data(dataName){
+		data_selection = dataName
+		queue()
+		.defer(d3.json, "us.json")
+		.defer(d3.csv, "data.csv")
+		.await(ready);
+	}
+	
+	load_data();
 	  //Start of Choropleth drawing
 
 	function ready(error, us, data) {
 		var rateById = {};
 		var nameById = {};
 
+		
 		data.forEach(function(d) {
-		rateById[d.id] = +d.rate;
-		nameById[d.id] = d.name;
+			rateById[d.id] = +d[data_selection];
+			nameById[d.id] = d.name;
 		});
 		console.log(nameById)
 		//Drawing Choropleth
@@ -170,12 +176,17 @@ div.tooltip {
 			<input 	type="radio" 
 					name="datasource" 
 					value="Rate1"
-					onclick=ready()>Rate1
+					onclick=load_data(value)>Rate1
 			<br>
 			<input 	type="radio" 
 					name="datasource" 
 					value="Rate2"
-					onclick=updatesource()>Rate2
+					onclick=load_data(value)>Rate2
+			<br>
+			<input 	type="radio" 
+					name="datasource" 
+					value="Rate3"
+					onclick=load_data(value)>Rate3
 			<br>
 		</form> 
 </body>
