@@ -31,10 +31,10 @@ body {
 
 div.tooltip {   
   position: absolute;           
-  text-align: center;           
+  text-align: center;
   width: 150px;                  
-  height: 25px;                 
-  padding: 2px;             
+  height: 20px;                 
+  padding: 2px;
   font-size: 10px;     
   background: #FFFFE0;
   border: 1px;      
@@ -83,32 +83,38 @@ div.tooltip {
 	  .style("margin", "10px auto");
 
 
-	  var path = d3.geo.path()
-
-	//Reading map file and data
+	var path = d3.geo.path()
 	var data_selection;
 
-	function load_data(dataName){
+	//take data column name, and either create a map or update it. 
+	function load_data(dataName, create_bool){
 		data_selection = dataName
-		queue()
-		.defer(d3.json, "us.json")
-		.defer(d3.csv, "data.csv")
-		.await(ready);
+		console.log("test"+create_bool)
+		if (create_bool == "true"){
+			queue()
+			.defer(d3.json, "us.json")
+			.defer(d3.csv, "data.csv")
+			.await(create_map);		
+		}
+		if (create_bool == "false"){
+			queue()
+			.defer(d3.json, "us.json")
+			.defer(d3.csv, "data.csv")
+			.await(update_map);		
+		}
 	}
 	
-	load_data();
+	load_data("Rate1", "true");
 	  //Start of Choropleth drawing
 
-	function ready(error, us, data) {
+	function create_map(error, us, data) {
 		var rateById = {};
 		var nameById = {};
-
 		
 		data.forEach(function(d) {
 			rateById[d.id] = +d[data_selection];
 			nameById[d.id] = d.name;
 		});
-		console.log(nameById)
 		//Drawing Choropleth
 
 		svg.append("g")
@@ -119,32 +125,67 @@ div.tooltip {
 		.enter().append("path")
 		.attr("d", path)
 		.style ( "fill" , function (d) { 
-		return color (rateById[d.id]);
+			return color (rateById[d.id]);
 		})
 		.style("opacity", 0.8)
 
-
 		//Adding mouseevents
 		.on("mouseover", function(d) {
-		d3.select(this).transition().duration(300).style("opacity", 1);
-		div.transition().duration(300)
-		.style("opacity", 1)
-		div.text(nameById[d.id] + " : " + rateById[d.id])
-		.style("left", (d3.event.pageX) + "px")
-		.style("top", (d3.event.pageY -30) + "px");
+			d3.select(this).transition().duration(300).style("opacity", 1);
+			div.transition().duration(300)
+			.style("opacity", 1)
+			
+			div.text(nameById[d.id] + " : " + rateById[d.id])
+			.style("left", (d3.event.pageX) + "px")
+			.style("top", (d3.event.pageY -30) + "px");
 		})
 		.on("mouseout", function() {
-		d3.select(this)
-		.transition().duration(300)
-		.style("opacity", 0.8);
-		div.transition().duration(300)
-		.style("opacity", 0);
+			d3.select(this)
+			.transition().duration(300)
+			.style("opacity", 0.8);
+			div.transition().duration(300)
+			.style("opacity", 0);
 		})
-
-	   
 	  
 	}; // <-- End of Choropleth drawing
-	 
+	
+	// update the map if svg already exists
+	function update_map (error, us, data){
+	
+		//load data into arrays
+		var rateById = {};
+		var nameById = {};
+		
+		data.forEach(function(d) {
+			rateById[d.id] = +d[data_selection];
+			nameById[d.id] = d.name;
+		});
+		
+		//Update fills
+		 d3.selectAll("path")
+		.style ("fill", function (d) { 
+				return color (rateById[d.id]);
+		})
+			
+		//Update mouseevents
+		.on("mouseover", function(d) {
+			d3.select(this).transition().duration(300).style("opacity", 1);
+			div.transition().duration(300)
+			.style("opacity", 1)
+			
+			div.text(nameById[d.id] + " : " + rateById[d.id])
+			.style("left", (d3.event.pageX) + "px")
+			.style("top", (d3.event.pageY -30) + "px");
+		})
+		.on("mouseout", function() {
+			d3.select(this)
+			.transition().duration(300)
+			.style("opacity", 0.8);
+			div.transition().duration(300)
+			.style("opacity", 0);
+		})
+	} 
+	
 	  //Adding legend for our Choropleth
 
 	  var legend = svg.selectAll("g.legend")
@@ -176,17 +217,17 @@ div.tooltip {
 			<input 	type="radio" 
 					name="datasource" 
 					value="Rate1"
-					onclick=load_data(value)>Rate1
+					onclick=load_data(value,"false")> Rate1
 			<br>
 			<input 	type="radio" 
 					name="datasource" 
 					value="Rate2"
-					onclick=load_data(value)>Rate2
+					onclick=load_data(value,"false")>Rate2
 			<br>
 			<input 	type="radio" 
 					name="datasource" 
 					value="Rate3"
-					onclick=load_data(value)>Rate3
+					onclick=load_data(value,"false")>Rate3
 			<br>
 		</form> 
 </body>
