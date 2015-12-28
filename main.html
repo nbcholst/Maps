@@ -42,8 +42,16 @@ div.tooltip {
   pointer-events: none;         
 }        
 
+.Map_Container {
+	text-align: center;
+	vertical-align: top;
+	width: auto;
+	height: auto;
+}
+
 .Legend_Container {
 	float:left;
+	vertical-align: bottom;
 	border-style: solid;
 	width: 300px;
 	height: 100px;
@@ -59,6 +67,7 @@ div.tooltip {
 
 .Scale_Container {
 	float:left;
+	vertical-align: bottom;
 	border-style: solid;
 	width: 300px;
 	height: 100px;
@@ -70,7 +79,8 @@ input[type="number"] {
 }
 </style>
 <body>
-	<h1>Independent Farms in the USA</h1>
+	<h1 style = "text-align:center;">Independent Farms in the USA</h1>
+	<div class="Map_Container">
 	  <script type="text/javascript">
 	  var width = 960,
 	  height = 500;
@@ -86,7 +96,7 @@ input[type="number"] {
 	.attr("class", "tooltip")               
 	.style("opacity", 100);
 
-	var svg = d3.select("body").append("svg")
+	var svg = d3.select(".Map_Container").append("svg")
 	.attr("width", width)
 	.attr("height", height)
 	.style("margin", "10px auto");
@@ -335,7 +345,7 @@ input[type="number"] {
 		return interval
 	}
 	</script>
-
+</div>
 	<div class="Legend_Container">
 		<h3 id= "LegendTitle">Data Selection</h3>
 		<form>
