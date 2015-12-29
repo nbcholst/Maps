@@ -25,6 +25,9 @@ path {
   stroke: #fff;
 }
 
+.legend {
+  font-size: 12px;
+}
 
 body {
   font-family: Arial, sans-serif;
@@ -81,6 +84,7 @@ input[type="number"] {
 	var SizeMetric=[];
 	var max, min;
 	var data=[];
+	var StoreOwner=[];
 
 	var projection = d3.geo.albers()
 		.scale(1000)
@@ -91,7 +95,7 @@ input[type="number"] {
 	var path = d3.geo.path()
 		.projection(projection);
 
-	var svg = d3.select("body").append("svg")
+	var svg = d3.select(".Map_Container").append("svg")
 		.attr("width", width)
 		.attr("height", height);
 
@@ -117,6 +121,7 @@ input[type="number"] {
 		
 		data = data_input;
 		update_store_list(data, "ACV");
+		create_legend();
 		create_circles();
 	}
 
@@ -145,6 +150,7 @@ input[type="number"] {
 				return (CircleRadius);
 			})
 			.attr("fill", "red")
+			.attr("opacity",1)
 	}
 	
 	//Helper 3: Update Store list
@@ -152,6 +158,7 @@ input[type="number"] {
 		//initialize arrays
 		SizeMetric=[];
 		Coordinates=[];
+		StoreOwner=[];
 		
 		data.forEach(function(d) {
 	
@@ -163,6 +170,14 @@ input[type="number"] {
 			var SizeEntry_temp = [ACV_temp];
 			Array.prototype.push.apply(SizeMetric,SizeEntry_temp);
 			
+			//generate store owner list
+			var StoreEntry=[];
+			StoreEntry[d.Longitude] = d.StoreName;
+			var key_temp = Object.keys(StoreEntry)[0];
+			var name_temp = StoreEntry[key_temp];
+			var StoreEntry_temp = [name_temp];
+			Array.prototype.push.apply(StoreOwner,StoreEntry_temp);
+			
 			//generate coordinate array
 			var CoEntry=[];
 			CoEntry[d.Longitude] = +d.Latitude;
@@ -171,7 +186,7 @@ input[type="number"] {
 			var CoEntry_temp = [+longitude_temp,latitude_temp, ACV_temp];
 			Array.prototype.push.apply(Coordinates,[CoEntry_temp]);
 			})
-			
+		
 		update_minmax(SizeMetric);
 	}
 
@@ -190,7 +205,7 @@ input[type="number"] {
 	
 	}
 	
-	//Helper 5: Update Circles
+	//Helper 5: Update Circles Based on Metric
 	function update_circles(){
 	    // coordinates to project [LONG, LAT]
 		
@@ -212,6 +227,56 @@ input[type="number"] {
 			})
 			.attr("fill", "red")
 	}
+	
+	//Helper 6: Create Legend
+	function create_legend(){
+		var legend = svg.selectAll("g.legend")
+		.data([1,2])
+		.enter().append("g")
+		.attr("class", "legend");
+
+		var ls_w = 20, ls_h = 20;
+
+		//create ellipse so circle update function doesn't apply here (figure out better fix later)
+		legend.append("ellipse")
+		.attr("cx", 20)
+		.attr("cy", function(d, i){ return height - (i*ls_h) - 2*ls_h;})
+		.attr("rx", function(d,i){return d*4;})
+		.attr("ry", function(d,i){return d*4;})
+		.style("fill", "red");
+
+		legend.append("text")
+		.attr("x", 50)
+		.attr("y", function(d, i){ return height - (i*ls_h) - 2*ls_h +4;})
+		.text(function(d,i){
+			if (d==2){
+			return "Max = " + max.toLocaleString();
+			} else if (d==1){
+			return "Min = " + min.toLocaleString();
+			}
+		});	
+	}
+	
+	//Helper 7: Update Circles Based on Filter
+	function update_circle_filter(Store_Filter){
+	
+		console.log(StoreOwner);
+		// add circles to svg
+		svg.selectAll("circle")
+			.attr("opacity", function (d,i) {
+				if (StoreOwner[i] == Store_Filter){
+					if (document.getElementById(Store_Filter).checked){
+						return 1;
+					} else {
+						return 0;
+					}
+					return 0;
+				} else {
+				return d3.select(this).attr("opacity")
+				}
+			});
+	}
+	
 	</script>
 	
 </div>
@@ -242,19 +307,32 @@ input[type="number"] {
 	</div>
 
 	<div class="Scale_Container">
-		<h3 id= "LegendTitle">Value Scale</h3>
+		<h3 id= "LegendTitle">Retail Filter</h3>
 			<form>
-				<span style="float: left"> Minimum</span>
-				<span style="padding-left:11.5%"> <button type="button">Reset to Default</button> </span>
-				<span style="float: right"> Maximum</span></br>
-
-				<span style="float: left"> <input 	input type="number" id = "minText"></span>
-				<span style="padding-left:10%"> <button type="button">Update Values</button> </span>
-				<span style="float: right"><input 	input type="number" id = "maxText"></span>
+				<input 	type="checkbox" 
+						id = "DOLLAR GENERAL"
+						value="DOLLAR GENERAL"
+						checked
+						onclick=update_circle_filter(value)
+						>Dollar General
+				<br>
+				<input 	type="checkbox" 
+						id="FAMILY DOLLAR"
+						value="FAMILY DOLLAR"
+						checked
+						onclick=update_circle_filter(value)
+						>Family Dollar
+				<br>
+				<input 	type="checkbox"
+						id="WALMART SUPERCENTER"
+						value="WALMART SUPERCENTER"
+						checked
+						onclick=update_circle_filter(value)
+						>Walmart
+				<br>
 				
 			</form>
 	</div>
 
 </body>
 </html>
-
