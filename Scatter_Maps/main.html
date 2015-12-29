@@ -72,9 +72,20 @@ body {
 input[type="number"] {
    width:70px;
 }
+
+.colorpicker {   
+    float: left;
+	margin-left: 5px;
+    width: 12px;
+    height: 12px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgba(0,0,0,.2);
+}
+
 </style>
 <body>
-	<h1 style = "text-align:center;">Independent Farms in the USA</h1>
+	<h1 style = "text-align:center;">Store ACV and Alcohol Sales in the USA</h1>
 	<div class="Map_Container">
 	<script type="text/javascript">
 
@@ -85,7 +96,12 @@ input[type="number"] {
 	var max, min;
 	var data=[];
 	var StoreOwner=[];
-
+	
+	//set circle min and max size in pixels
+	var newMax = 6;
+	var newMin = 1;
+	
+	//begin running code
 	var projection = d3.geo.albers()
 		.scale(1000)
 		.translate([width / 2, height / 2])
@@ -105,7 +121,7 @@ input[type="number"] {
 		.defer(d3.csv, "data.csv")
 		.await(ready);
 
-	//draw map
+	//Helper 1: Draw the map
 	function ready(error, us, data_input) {
 		if (error) throw error;
 
@@ -138,10 +154,6 @@ input[type="number"] {
 			.attr("cy", function (d) {return projection(d)[1]; })
 			.attr("r", function (d) {
 				//make size proportional to range of data:
-				
-				//set max and min pixel radius of circles
-				var newMax = 4;
-				var newMin = 1;
 				
 				//transform data --> UPDATE THIS LATER SINCE THIS CAN BE DONE A LOT SIMPLER
 				var oldRange = (max - min);  
@@ -202,7 +214,7 @@ input[type="number"] {
 	
 	update_store_list(data, metric);
 	update_circles();
-	
+	update_legend();
 	}
 	
 	//Helper 5: Update Circles Based on Metric
@@ -214,10 +226,6 @@ input[type="number"] {
 		svg.selectAll("circle")
 			.attr("r", function (d,i) {
 				//make size proportional to range of data:
-				
-				//set max and min pixel radius of circles
-				var newMax = 4;
-				var newMin = 1;
 				
 				//transform data --> UPDATE THIS LATER SINCE THIS CAN BE DONE A LOT SIMPLER
 				var oldRange = (max - min);  
@@ -243,11 +251,18 @@ input[type="number"] {
 		.attr("cy", function(d, i){ return height - (i*ls_h) - 2*ls_h;})
 		.attr("rx", function(d,i){return d*4;})
 		.attr("ry", function(d,i){return d*4;})
-		.style("fill", "red");
+		.style("fill", "black");
 
 		legend.append("text")
 		.attr("x", 50)
 		.attr("y", function(d, i){ return height - (i*ls_h) - 2*ls_h +4;})
+		.attr("id", function(d,i){
+			if (d==2){
+				return "Max_Val";
+			} else if (d==1){
+				return "Min_Val";
+			}
+		})
 		.text(function(d,i){
 			if (d==2){
 			return "Max = " + max.toLocaleString();
@@ -259,8 +274,6 @@ input[type="number"] {
 	
 	//Helper 7: Update Circles Based on Filter
 	function update_circle_filter(Store_Filter){
-	
-		console.log(StoreOwner);
 		// add circles to svg
 		svg.selectAll("circle")
 			.attr("opacity", function (d,i) {
@@ -277,6 +290,37 @@ input[type="number"] {
 			});
 	}
 	
+	//Helper 8: Update Circles Based on Color
+	function update_circle_color(Store_Color, Store_Filter){
+		console.log(Store_Color, Store_Filter + " color");
+		
+		var selection = document.getElementById(Store_Filter + " color");
+		selection.style.backgroundColor = Store_Color;
+		
+		// add circles to svg
+		svg.selectAll("circle")
+			.attr("fill", function (d,i) {
+				if (StoreOwner[i] == Store_Filter){
+					return Store_Color;
+				} else {
+				return d3.select(this).attr("fill")
+				}
+			});
+	}
+	
+	//Helper 9: Update Legend
+	function update_legend(){
+		console.log("updating legend..." + max + " and " + min)
+		var legend = svg.selectAll("text")
+		.text(function(d,i){
+			if (d==2){
+			return "Max = " + max.toLocaleString();
+			} else if (d==1){
+			return "Min = " + min.toLocaleString();
+			}
+		});	
+	}
+	
 	</script>
 	
 </div>
@@ -287,20 +331,21 @@ input[type="number"] {
 			<input 	type="radio" 
 					name="datasource" 
 					value="ACV"
+					checked="checked"
 					onclick=update_data(value)
-					>ACV
+					>Store ACV
 			<br>
 			<input 	type="radio" 
 					name="datasource" 
 					value="Beer"
 					onclick=update_data(value)
-					>Beer
+					>Beer Sales
 			<br>
 			<input 	type="radio" 
 					name="datasource" 
 					value="Wine"
 					onclick=update_data(value)
-					>Wine
+					>Wine Sales
 			<br>
 		</div>
 		</form>
@@ -309,28 +354,70 @@ input[type="number"] {
 	<div class="Scale_Container">
 		<h3 id= "LegendTitle">Retail Filter</h3>
 			<form>
-				<input 	type="checkbox" 
-						id = "DOLLAR GENERAL"
-						value="DOLLAR GENERAL"
-						checked
-						onclick=update_circle_filter(value)
-						>Dollar General
-				<br>
-				<input 	type="checkbox" 
-						id="FAMILY DOLLAR"
-						value="FAMILY DOLLAR"
-						checked
-						onclick=update_circle_filter(value)
-						>Family Dollar
-				<br>
-				<input 	type="checkbox"
-						id="WALMART SUPERCENTER"
-						value="WALMART SUPERCENTER"
-						checked
-						onclick=update_circle_filter(value)
-						>Walmart
-				<br>
-				
+			<table>
+				<tr>
+					<td>
+						<input 	type="checkbox" 
+								id = "DOLLAR GENERAL"
+								value="DOLLAR GENERAL"
+								checked
+								onclick=update_circle_filter(value)
+								>Dollar General
+					</td>
+					<td>
+						<div class="colorpicker" id="DOLLAR GENERAL color" style="background-color:red;"></div>
+					</td>
+					<td>
+						<select name="DOLLAR GENERAL" onchange="update_circle_color(this.value, this.name);">
+							<option value="Red">Red</option>
+							<option value="Blue">Blue</option>
+							<option value="Green">Green</option>
+							<option value="Yellow">Yellow</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input 	type="checkbox" 
+								id="FAMILY DOLLAR"
+								value="FAMILY DOLLAR"
+								checked
+								onclick=update_circle_filter(value)
+								>Family Dollar
+					</td>
+					<td>
+						<div class="colorpicker" id="FAMILY DOLLAR color" style="background-color:red;"></div>
+					</td>
+					<td>
+						<select name="FAMILY DOLLAR" onchange="update_circle_color(this.value, this.name);">
+							<option value="Red">Red</option>
+							<option value="Blue">Blue</option>
+							<option value="Green">Green</option>
+							<option value="Yellow">Yellow</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input 	type="checkbox"
+								id="WALMART SUPERCENTER"
+								value="WALMART SUPERCENTER"
+								checked
+								onclick=update_circle_filter(value)
+								>Walmart
+					</td>
+					<td>
+						<div class="colorpicker" id="WALMART SUPERCENTER color" style="background-color:red;"></div>
+					</td>
+					<td>
+						<select name="WALMART SUPERCENTER" onchange="update_circle_color(this.value, this.name);">
+							<option value="Red">Red</option>
+							<option value="Blue">Blue</option>
+							<option value="Green">Green</option>
+							<option value="Yellow">Yellow</option>
+						</select>
+					</td>				</tr>	
+			</table>
 			</form>
 	</div>
 
