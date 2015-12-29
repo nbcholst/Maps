@@ -80,7 +80,7 @@ input[type="number"] {
 	var Coordinates=[];
 	var SizeMetric=[];
 	var max, min;
-
+	var data=[];
 
 	var projection = d3.geo.albers()
 		.scale(1000)
@@ -102,7 +102,7 @@ input[type="number"] {
 		.await(ready);
 
 	//draw map
-	function ready(error, us, data) {
+	function ready(error, us, data_input) {
 		if (error) throw error;
 
 		svg.append("path")
@@ -114,15 +114,17 @@ input[type="number"] {
 			.datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
 			.attr("class", "states")
 			.attr("d", path);
-			
-		update_store_list(data);
+		
+		data = data_input;
+		update_store_list(data, "ACV");
 		create_circles();
 	}
 
-	//Helper 2: Add a circle to the map
-	function create_circles(geo_list){
-	    		
-		// coordinates to project [LONG, LAT]		
+	//Helper 2: Add Circles
+	function create_circles(){
+	    // coordinates to project [LONG, LAT]
+		
+		//console.log(Coordinates);
 	    // add circles to svg
 		svg.selectAll("circle")
 			.data(Coordinates).enter()
@@ -138,22 +140,24 @@ input[type="number"] {
 				
 				//transform data --> UPDATE THIS LATER SINCE THIS CAN BE DONE A LOT SIMPLER
 				var oldRange = (max - min);  
-				newRange = (newMax - newMin);  
+				newRange = (newMax - newMin);
 				CircleRadius = ((((d)[2] - min) * newRange) / oldRange) + newMin;
 				return (CircleRadius);
-
 			})
 			.attr("fill", "red")
 	}
 	
 	//Helper 3: Update Store list
-	function update_store_list(data){
+	function update_store_list(data, metric){
+		//initialize arrays
+		SizeMetric=[];
+		Coordinates=[];
 		
 		data.forEach(function(d) {
 	
 			//generate circle size metric
 			var SizeEntry=[];
-			SizeEntry[d.Longitude] = +d.ACV;
+			SizeEntry[d.Longitude] = +d[metric];
 			var key_temp = Object.keys(SizeEntry)[0];
 			var ACV_temp = SizeEntry[key_temp];
 			var SizeEntry_temp = [ACV_temp];
@@ -169,16 +173,44 @@ input[type="number"] {
 			})
 			
 		update_minmax(SizeMetric);
-			
-
-		//console.log(SizeMetric);
 	}
 
-	// pull min/max and populate
+	//Helper 4: Pull min/max and populate
 	function update_minmax (data){
 		max = d3.max(data);
 		min = d3.min(data);
 		console.log(max , min);
+	}
+	
+	//Helper 5: Update Data
+	function update_data(metric){
+	
+	update_store_list(data, metric);
+	update_circles();
+	
+	}
+	
+	//Helper 5: Update Circles
+	function update_circles(){
+	    // coordinates to project [LONG, LAT]
+		
+		//console.log(SizeMetric);
+	    // add circles to svg
+		svg.selectAll("circle")
+			.attr("r", function (d,i) {
+				//make size proportional to range of data:
+				
+				//set max and min pixel radius of circles
+				var newMax = 4;
+				var newMin = 1;
+				
+				//transform data --> UPDATE THIS LATER SINCE THIS CAN BE DONE A LOT SIMPLER
+				var oldRange = (max - min);  
+				newRange = (newMax - newMin);
+				CircleRadius = (((SizeMetric[i] - min) * newRange) / oldRange) + newMin;
+				return (CircleRadius);
+			})
+			.attr("fill", "red")
 	}
 	</script>
 	
@@ -189,18 +221,21 @@ input[type="number"] {
 		<div>
 			<input 	type="radio" 
 					name="datasource" 
-					value="Rate1"
-					>Rate1
+					value="ACV"
+					onclick=update_data(value)
+					>ACV
 			<br>
 			<input 	type="radio" 
 					name="datasource" 
-					value="Rate2"
-					>Rate2
+					value="Beer"
+					onclick=update_data(value)
+					>Beer
 			<br>
 			<input 	type="radio" 
 					name="datasource" 
-					value="Rate3"
-					>Rate3
+					value="Wine"
+					onclick=update_data(value)
+					>Wine
 			<br>
 		</div>
 		</form>
@@ -222,3 +257,4 @@ input[type="number"] {
 
 </body>
 </html>
+
